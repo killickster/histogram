@@ -1,0 +1,68 @@
+body {
+    font-family: "Roboto";
+    margin: 0;
+  }
+  
+  text {
+    font-family: "Roboto";
+  }
+  
+  .base-area {
+    fill: #D7D7D7;
+  }
+  
+  .domain {
+    display: none;
+  }
+  .axis line {
+    stroke: #808080;
+    stroke-width: 4px;
+    stroke-linecap: round;
+  }
+  .tick line {
+    stroke: #808080;
+    stroke-width: 3px;
+    stroke-linecap: round;
+  }
+  .x-axis .tick {
+    text {
+      translate: 0 4px;
+    }
+  }
+  .axis {
+    .label {
+      fill: black;
+    }
+  
+    &.y-axis {
+      .label {
+        transform: translate(21px, 21px);
+        text-anchor: end;
+      }
+      .tick {
+        &:nth-of-type(1) {
+          display: none;
+        }
+        text {
+          translate: -4px 0;
+        }
+      }
+    }
+  }
+  
+  .leg {
+    .label {
+      text-anchor: start;
+    }
+  }
+  
+  .tooltip {
+    text {
+      fill: black;
+      text-anchor: end;
+    }
+  }
+  
+  .shadow {
+    filter: drop-shadow( 1px -1px 1px rgba(0, 0, 0, .5));
+  }

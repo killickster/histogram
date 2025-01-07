@@ -1,1 +1,72 @@
-/* You can add global styles to this file, and also import other style files */
+#histogram text {
+    font-family: 'Roboto';
+  }
+  
+  #histogram .base-area {
+    fill: #d7d7d7;
+  }
+  
+  #histogram .domain {
+    display: none;
+  }
+  #histogram .axis line {
+    stroke: #808080;
+    stroke-width: 4px;
+    stroke-linecap: round;
+  }
+  #histogram .tick line {
+    stroke: #808080;
+    stroke-width: 3px;
+    stroke-linecap: round;
+  }
+  #histogram .x-axis .tick {
+    text {
+      translate: 0 4px;
+      color: #000;
+    }
+  }
+  #histogram .axis {
+    .svg-label {
+      fill: black;
+    }
+  
+    &.y-axis {
+      .svg-label {
+        transform: translate(21px, 21px);
+        text-anchor: end;
+      }
+      .tick {
+        &:nth-of-type(1) {
+          display: none;
+        }
+        text {
+          translate: -4px 0;
+          color: black;
+        }
+      }
+    }
+  }
+  
+  #histogram .legend {
+    .svg-label {
+      font-family: Roboto;
+      font-style: normal;
+      font-weight: 400;
+      font-size: 25px;
+      line-height: 29px;
+      color: #222;
+      margin-top: 7px;
+    }
+  }
+  
+  #histogram .tooltip {
+    text {
+      fill: black;
+      text-anchor: end;
+    }
+  }
+  
+  #histogram .shadow {
+    filter: drop-shadow(1px -1px 1px rgba(0, 0, 0, 0.5));
+  }
+  
