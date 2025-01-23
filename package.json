@@ -6,7 +6,7 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "deploy": "rsync -azP --delete dist/ daviste.com:/home/dmitra/daviste.com/static/demo/protern"
   },
   "private": true,
   "dependencies": {
@@ -15,7 +15,6 @@
     "@angular/core": "15.2.7",
     "core-js": "3.30.0",
     "d3": "^7.9.0",
-    "dayjs": "1.11.7",
     "lodash": "^4.17.21",
     "roboto-fontface": "^0.10.0",
     "zone.js": "~0.11.4"

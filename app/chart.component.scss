@@ -16,8 +16,12 @@ text {
     display: none;
   }
 
+  #triangle {
+    fill: #757575;
+  }
+
   .axis line {
-    stroke: #808080;
+    stroke: #757575;
     stroke-width: 4px;
     stroke-linecap: round;
   }

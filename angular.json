@@ -20,14 +20,14 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
-            "outputPath": "dist/histogram-component",
+            "outputPath": "dist",
             "index": "./index.html",
             "main": "./main.ts",
             "polyfills": "./polyfills.ts",
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "scss",
             "assets": [
-              "favicon.ico",
+              "favicon.png",
               "data"
             ],
             "scripts": []
@@ -40,7 +40,8 @@
               "extractLicenses": false,
               "sourceMap": true,
               "namedChunks": true
-            }
+            },
+            "production": {}
           },
           "defaultConfiguration": "production"
         },
