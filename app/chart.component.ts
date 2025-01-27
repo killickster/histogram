@@ -16,12 +16,34 @@ import Legend from './legend'
 export class ChartComponent implements AfterViewInit {
   dataUrl = './data/d2.json'
   svg: any
-  config: any = {
-    colors: ['#1E1545', '#402d93', '#0079be'],
+  config = {
+    width: 0,
+    aspectRatio: 1,
+    step: 0,
+    skipTransition: false,
     xKey: 'speed',
-    categories: ['current_quant_time', 'other_quant_time', 'non_quant_time'],
-    labels: ['Quantriq', 'Other quantriqs', 'Free skiing'],
-    base: { key: 'average_quant_time', label: 'All athletes', color: '#9e9e9e' },
+    y: [{
+      key: 'current_quant_time',
+      label: 'Quantriq',
+      color: '#1E1545',
+      enabled: true,
+    }, {
+      key: 'other_quant_time',
+      label: 'Other quant.',
+      color: '#402d93',
+      enabled: true,
+    }, {
+      key: 'non_quant_time',
+      label: 'Free ski',
+      color: '#0079be',
+      enabled: false,
+    }, {
+      key: 'average_quant_time',
+      label: 'All athletes',
+      color: '#9e9e9e',
+      base: true,
+      enabled: true
+    }],
   }
   data = []
 
@@ -29,6 +51,11 @@ export class ChartComponent implements AfterViewInit {
 
   onResize (event: any): void {
     this.debounce(() => this.render({ skipTransition: true }), 200)()
+  }
+
+  onToggle (i: number): void {
+    this.config.y[i].enabled = !this.config.y[i].enabled
+    this.render({ skipTransition: true })
   }
 
   debounce (func: Function, wait: number): () => void {
@@ -58,9 +85,9 @@ export class ChartComponent implements AfterViewInit {
 
     const r = await fetch(this.dataUrl)
     const raw = await r.json()
-    const xMax = _.findLast(raw, d => _.sumBy(this.config.categories, cat => d[cat as string]) > 0).speed * 1.2
+    const xMax = _.findLast(raw, d => _.sumBy(this.config.y, y => d[y.key as string]) > 0).speed * 1
     this.data = _.filter(_.sortBy(raw, this.config.xKey), d => (
-      _.sumBy(this.config.categories, cat => d[cat as string]) > 0 || d[this.config.xKey] < xMax
+      _.sumBy(this.config.y, y => d[y.key]) > 0 || d[this.config.xKey] < xMax
     ))
 
     const xExtent = d3.extent(this.data, d => d[this.config.xKey])
@@ -71,19 +98,20 @@ export class ChartComponent implements AfterViewInit {
   }
 
   render (p?: any) {
-    this.config.width = window.innerWidth / 1.2
+    this.config.width = window.innerWidth / 1
     this.config.skipTransition = p?.skipTransition
 
     const cell = this.config.width ** 0.38
     const margin = {
       top: cell * 6,
       right: cell * 7,
-      bottom: cell * 6,
+      bottom: cell * 10,
       left: cell * 5,
     }
 
     _.merge(this.config, {
-      aspectRatio: 1.9,
+      svg: this.svg,
+      aspectRatio: 1.6,
       breakpoints: {
         xs: 480,
         sm: 768,
@@ -98,21 +126,13 @@ export class ChartComponent implements AfterViewInit {
       cell,
       padding: 0.3,
       fontSize1: cell * 1.5,
-      fontSize2: cell * 1.5 * 1.2,
       cornerRadius: 3,
+      onToggle: this.onToggle.bind(this),
     })
 
     this.svg.attr('width', this.config.width).attr('height', this.config.width / this.config.aspectRatio)
 
-    const legendData = _.map(this.config.labels,
-      (label, i) => ({
-        label,
-        color: this.config.colors[i],
-      }))
-
-    if (this.config.base) legendData.push(this.config.base)
-
-    Chart(this.config, this.data, this.svg)
-    Legend(this.config, legendData, this.svg)
+    Chart(this.config, this.data)
+    Legend(this.config, this.config.y)
   }
 }

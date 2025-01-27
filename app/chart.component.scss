@@ -1,13 +1,6 @@
-body {
-  font-family: "Roboto";
-  margin: 0;
-}
-
-text {
-  font-family: "Roboto";
-}
-
 :host ::ng-deep {
+  display: block;
+
   .base-area {
     fill: #D7D7D7;
   }
@@ -64,6 +57,10 @@ text {
   .legend {
     .label {
       text-anchor: start;
+
+      path {
+        stroke-width: 2;
+      }
     }
   }
 

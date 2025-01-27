@@ -30,6 +30,9 @@
               "favicon.png",
               "data"
             ],
+            "styles": [
+              "styles.scss"
+            ],
             "scripts": []
           },
           "configurations": {

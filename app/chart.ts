@@ -2,12 +2,15 @@
 import * as _ from 'lodash'
 import * as d3 from 'd3'
 
+import Tooltip from './tooltip'
 import roundedRect from '../util/roundedRect'
 import { stepRoundBefore as curveStepRound } from '../util/curveStepRound'
 
-export default function Chart (c, data, svg) {
-  const y0 = c.categories[0]
-  const y1 = c.categories[1]
+export default function Chart (c, data) {
+  const yDefs = _.sortBy(c.y, y => !y.enabled || y.base === true)
+  const stackedDefs = _.filter(yDefs, y => !y.base)
+  const baseDef = _.find(yDefs, { base: true })
+
   const breakpoints = _.map(c.breakpoints, (value, key) => ({ key, value }))
   const breakpoint = _.find(breakpoints, (b, i) => {
     const next = breakpoints[i + 1]
@@ -20,7 +23,6 @@ export default function Chart (c, data, svg) {
     [c.margin.left - (barWidth * c.padding) / 2, c.width - c.margin.right]
   ).padding(c.padding)
 
-  const colorScale = d3.scaleOrdinal(c.categories, c.colors)
   const xExtent = d3.extent(data, d => d[c.xKey])
 
   const xScaleAxis = d3.scaleLinear(
@@ -29,16 +31,16 @@ export default function Chart (c, data, svg) {
   )
 
   const yScale = d3.scaleLinear(
-    [0, d3.max(data, d => _.sumBy(c.categories, category => d[category] || 0))],
+    [0, d3.max(data, d => Math.max(_.sumBy(stackedDefs, y => d[y.key] || 0), d[baseDef.key]))],
     [height - c.margin.bottom, c.margin.top]
   )
   const maxY = yScale(0)
 
   const stack = d3.stack()
-    .keys(c.categories)
+    .keys(_.map(stackedDefs, 'key'))
   const series = stack(data)
 
-  const plot = svg.selectAll('g.plot').data([null])
+  const plot = c.svg.selectAll('g.plot').data([null])
     .join('g')
     .classed('plot', true)
 
@@ -54,12 +56,12 @@ export default function Chart (c, data, svg) {
     const baseData = [
       { ...data[0], [c.xKey]: stepLeft },
       ...data,
-      { [c.xKey]: stepRight, [c.base.key]: 0 },
+      { [c.xKey]: stepRight, [baseDef.key]: 0 },
     ]
     const area = d3.area()
       .x(d => xScaleBaseline(d[c.xKey]) + barWidth)
       .y0(maxY)
-      .y1(d => yScale(d[c.base.key]))
+      .y1(d => yScale(d[baseDef.key]))
       .curve(curveStepRound)
 
     const group = plot.selectAll('g.base-area').data([null])
@@ -71,7 +73,8 @@ export default function Chart (c, data, svg) {
       .data([baseData])
       .join('path')
       .attr('d', area)
-      .style('fill', d => c.base.color)
+      .style('fill', () => baseDef.color)
+      .attr('opacity', d => baseDef.enabled ? 1 : 0.15)
   }
 
   function stackedBar () {
@@ -79,16 +82,27 @@ export default function Chart (c, data, svg) {
       .data(series)
       .join('g')
       .classed('bar', true)
-      .style('fill', d => colorScale(d.key))
+      .style('fill', (d, i) => yDefs[i].color)
+      .style('opacity', (d, i) => yDefs[i].enabled ? 1 : 0.15)
 
-    groups.selectAll('path')
+    const bars = groups.selectAll('path')
       .data(d => d)
       .join('path')
+      .on('mouseover', (e, d) => {
+        _.each(document.querySelectorAll(`.xKey-${d.data[c.xKey]}`), el => el.classList.add('shadow'))
+        Tooltip(c, d)
+      })
+      .on('mouseout', (e, d) => {
+        _.each(document.querySelectorAll(`.xKey-${d.data[c.xKey]}`), el => el.classList.remove('shadow'))
+        Tooltip(c)
+      })
+
+    bars
       .transition()
       .duration(c.skipTransition ? 0 : 750)
       .attr('class', d => `xKey-${ d.data[c.xKey] }`, true)
       .attr('d', (d, i, j) => {
-        const isFlat = d[1] !== _.sumBy(c.categories, cat => d.data[cat])
+        const isFlat = d[1] !== _.sumBy(stackedDefs, y => d.data[y.key])
         return roundedRect(
           xScale(d.data[c.xKey]),
           yScale(d[1]),
@@ -103,7 +117,7 @@ export default function Chart (c, data, svg) {
     const xAxis = d3.axisBottom(xScaleAxis)
       .ticks(c.ticks[breakpoint] + 1)
 
-    const xAxisEl = svg.selectAll('g.x-axis').data([null]).join('g')
+    const xAxisEl = c.svg.selectAll('g.x-axis').data([null]).join('g')
       .classed('axis', true)
       .classed('x-axis', true)
       .attr('transform', `translate(0,${ height - c.margin.bottom })`)
@@ -113,7 +127,7 @@ export default function Chart (c, data, svg) {
       .classed('label', true)
       .attr('x', c.width - c.margin.right / 2)
       .attr('y', c.cell * 2.2)
-      .attr('font-size', c.fontSize2)
+      .attr('font-size', c.fontSize1)
       .text('km/h')
 
     xAxisEl.selectAll('line.axis').data([null]).join('line')
@@ -128,7 +142,7 @@ export default function Chart (c, data, svg) {
   function yAxis () {
     const yAxis = d3.axisLeft(yScale)
       .ticks(c.ticks[breakpoint])
-    const yAxisEl = (d3.select('g.y-axis').node() ? d3.select('g.y-axis') : svg.append('g'))
+    const yAxisEl = (d3.select('g.y-axis').node() ? d3.select('g.y-axis') : c.svg.append('g'))
       .classed('axis', true)
       .classed('y-axis', true)
       .attr('transform', `translate(${ c.margin.left },0)`)
@@ -148,12 +162,12 @@ export default function Chart (c, data, svg) {
       .classed('label', true)
       .attr('x', c.cell + c.margin.left)
       .attr('y', c.cell)
-      .attr('font-size', c.fontSize2)
+      .attr('font-size', c.fontSize1)
       .text('seconds')
 
-    svg.selectAll('.domain')
+    c.svg.selectAll('.domain')
       .style('stroke-width', `${ c.cell / 4 }px`)
-    svg.selectAll('.tick text')
+    c.svg.selectAll('.tick text')
       .style('font-size', `${ c.fontSize1 }px`)
   }
 
