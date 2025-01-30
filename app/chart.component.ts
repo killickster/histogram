@@ -29,7 +29,7 @@ export class ChartComponent implements AfterViewInit {
       enabled: true,
     }, {
       key: 'other_quant_time',
-      label: 'Other quant.',
+      label: 'Other quantriqs',
       color: '#402d93',
       enabled: true,
     }, {
@@ -67,7 +67,7 @@ export class ChartComponent implements AfterViewInit {
   }
 
   async ngAfterViewInit () {
-    this.svg = d3.select('#histogram')
+    this.svg = d3.select('.histogram')
 
     this.svg
       .append('svg:defs')
@@ -105,13 +105,13 @@ export class ChartComponent implements AfterViewInit {
     const margin = {
       top: cell * 6,
       right: cell * 7,
-      bottom: cell * 10,
+      bottom: cell * 3,
       left: cell * 5,
     }
 
     _.merge(this.config, {
       svg: this.svg,
-      aspectRatio: 1.6,
+      aspectRatio: 1.9,
       breakpoints: {
         xs: 480,
         sm: 768,

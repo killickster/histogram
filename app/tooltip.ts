@@ -1,33 +1,45 @@
-import * as d3 from 'd3'
 import * as _ from 'lodash'
+import { arrow, computePosition, offset, flip } from '@floating-ui/dom'
 
-export default function (c, d) {
-  const height = c.width / c.aspectRatio
-  const { cell } = c
-  const data = d?.data
-  c.svg.select('g.tooltip').remove()
-  if (!data) return
+export default function (c, d, el) {
+  const tooltip = document.querySelector('.tooltip') as HTMLElement
+  const arrowEl = document.querySelector('.tooltip .arrow') as HTMLElement
 
-  const container = c.svg.append('g')
-    .classed('tooltip', true)
+  if (!d) return tooltip.style.display = 'none'
 
-  container
-    .append('text')
-    .classed('speed', true)
-    .attr('dx', c.width - cell)
-    .attr('dy', height - c.margin.bottom - cell)
-    .attr('font-size', c.fontSize1)
-    .text(`${ data?.[c.xKey] - c.step } - ${ data?.[c.xKey] }`)
+  tooltip.style.display = 'block'
+  tooltip.style.fontSize = c.fontSize1 + 'px'
+  tooltip.querySelector('.xKey').innerHTML = `${d.data[c.xKey]} - ${ d.data[c.xKey] + c.step } km/h`
+  const key = el.parentElement.classList[0]
+  tooltip.querySelector('.yKey').innerHTML = `${d.data[key]} seconds`
 
-  container
-    .selectAll('text.time')
-    .data(_.map(c.y, def => data[def.key]))
-    .join('text')
-    .classed('time', true)
-    .attr('x', c.margin.left + cell * 3 / 4)
-    .attr('y', height - cell * 5)
-    .attr('dx', (d, i) => `${ i % 2 * (c.width / 2 - c.margin.left) }`)
-    .attr('dy', (d, i) => Math.floor(i / 2) * cell * 4)
-    .attr('font-size', c.fontSize1)
-    .text(d => d)
+  computePosition(el, tooltip, {
+    placement: 'right',
+    middleware: [
+      flip(),
+      offset(6),
+      arrow({ element: arrowEl }),
+    ],
+  }).then(({ x, y, placement, middlewareData }) => {
+    _.assign(tooltip.style, {
+      left: `${ x }px`,
+      top: `${ y }px`,
+    })
+    const { x: arrowX, y: arrowY } = middlewareData.arrow
+
+    const staticSide = {
+      top: 'bottom',
+      right: 'left',
+      bottom: 'top',
+      left: 'right',
+    }[placement.split('-')[0]]
+
+    _.assign(arrowEl.style, {
+      left: arrowX != null ? `${ arrowX }px` : '',
+      top: arrowY != null ? `${ arrowY }px` : '',
+      right: '',
+      bottom: '',
+      [staticSide]: '-4px',
+    })
+  })
 }

@@ -59,15 +59,41 @@
       text-anchor: start;
 
       path {
-        stroke-width: 2;
+        stroke-width: 4;
       }
     }
   }
 
   .tooltip {
-    text {
-      fill: black;
-      text-anchor: end;
+    position: absolute;
+    display: none;
+    width: max-content;
+    border: 3px solid #757575;
+    border-radius: 6px;
+    pointer-events: none;
+
+    .content {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      align-items: center;
+      padding: 8px;
+      background-color: white;
+      border-radius: 4px;
+      z-index: 2;
+
+      div:first-child {
+        padding-bottom: 4px;
+      }
+    }
+
+    .arrow {
+      position: absolute;
+      width: 0px;
+      height: 0px;
+      border-left: 8px solid #757575;
+      border-top: 8px solid transparent;
+      transform: rotate(45deg) translate(-4px, 0);
     }
   }
 

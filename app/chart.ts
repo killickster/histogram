@@ -27,7 +27,7 @@ export default function Chart (c, data) {
 
   const xScaleAxis = d3.scaleLinear(
     d3.extent(data, (d) => d[c.xKey]),
-    [c.margin.left, c.width - c.margin.right]
+    [c.margin.left, c.width - c.margin.right - barWidth * (1 + c.padding / 2)],
   )
 
   const yScale = d3.scaleLinear(
@@ -81,6 +81,7 @@ export default function Chart (c, data) {
     const groups = plot.selectAll('g.bar')
       .data(series)
       .join('g')
+      .attr('class', d => d.key)
       .classed('bar', true)
       .style('fill', (d, i) => yDefs[i].color)
       .style('opacity', (d, i) => yDefs[i].enabled ? 1 : 0.15)
@@ -89,11 +90,11 @@ export default function Chart (c, data) {
       .data(d => d)
       .join('path')
       .on('mouseover', (e, d) => {
-        _.each(document.querySelectorAll(`.xKey-${d.data[c.xKey]}`), el => el.classList.add('shadow'))
-        Tooltip(c, d)
+        _.each(document.querySelectorAll(`.xKey-${ d.data[c.xKey] }`), el => el.classList.add('shadow'))
+        Tooltip(c, d, e.target)
       })
       .on('mouseout', (e, d) => {
-        _.each(document.querySelectorAll(`.xKey-${d.data[c.xKey]}`), el => el.classList.remove('shadow'))
+        _.each(document.querySelectorAll(`.xKey-${ d.data[c.xKey] }`), el => el.classList.remove('shadow'))
         Tooltip(c)
       })
 
@@ -101,7 +102,7 @@ export default function Chart (c, data) {
       .transition()
       .duration(c.skipTransition ? 0 : 750)
       .attr('class', d => `xKey-${ d.data[c.xKey] }`, true)
-      .attr('d', (d, i, j) => {
+      .attr('d', (d) => {
         const isFlat = d[1] !== _.sumBy(stackedDefs, y => d.data[y.key])
         return roundedRect(
           xScale(d.data[c.xKey]),
