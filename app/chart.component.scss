@@ -57,6 +57,7 @@
   .legend {
     .label {
       text-anchor: start;
+      pointer-events: bounding-box;
 
       path {
         stroke-width: 4;

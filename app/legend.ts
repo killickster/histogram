@@ -14,13 +14,14 @@ export default function Legend (c, data) {
 
   const container = c.svg.selectAll('g.legend').data([null]).join('g')
     .classed('legend', true)
-    .style('transform', `translate(${ c.width - c.margin.right - cell * 4 }px, ${ cell * 3 }px)`)
+    .style('transform', `translate(${ c.width - c.margin.right - cell * 4 }px, ${ cell * 2 }px)`)
 
   const labels = container.selectAll('g.label')
     .data(data)
     .join('g')
     .classed('label', true)
-    .style('transform', (d, i) => `translate(0, ${ i * (cell * 3) }px)`)
+    .style('transform', (d, i) => `translate(0, ${ i * (cell * 2.5) }px)`)
+    .on('click', (e, d) => c.onToggle(_.indexOf(data, d)))
 
   labels.selectAll('text')
     .data(d => [d])
@@ -36,5 +37,4 @@ export default function Legend (c, data) {
     })
     .attr('stroke', d => d.color)
     .attr('fill', d => d.enabled ? d.color : 'white')
-    .on('click', (e, d) => c.onToggle(_.indexOf(data, d)))
 }
