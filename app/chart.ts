@@ -8,7 +8,7 @@ import { stepRoundBefore as curveStepRound } from '../util/curveStepRound'
 
 export default function Chart (c, data) {
   const yDefs = _.sortBy(c.y, y => !y.enabled || y.base === true)
-  const stackedDefs = _.filter(yDefs, y => !y.base)
+  const stackedDefs = _.filter(yDefs, y => !y.base && y.enabled)
   const baseDef = _.find(yDefs, { base: true })
 
   const breakpoints = _.map(c.breakpoints, (value, key) => ({ key, value }))

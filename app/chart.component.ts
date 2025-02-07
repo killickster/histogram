@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, HostListener } from '@angular/core'
+import { AfterViewInit, Component, HostListener, OnInit } from '@angular/core'
 import { CommonModule } from '@angular/common'
 import * as _ from 'lodash'
 import * as d3 from 'd3'
@@ -13,8 +13,12 @@ import Legend from './legend'
   styleUrls: ['./chart.component.scss'],
   templateUrl: './chart.component.html',
 })
-export class ChartComponent implements AfterViewInit {
-  dataUrl = './data/d2.json'
+export class ChartComponent implements AfterViewInit, OnInit {
+
+  selectedOption: string = ''; // Default selected value
+
+  dataUrl1 = './data/d2.json'
+  dataUrl2 = './data/d3.json'
   svg: any
   config = {
     width: 0,
@@ -49,6 +53,10 @@ export class ChartComponent implements AfterViewInit {
 
   @HostListener('window:resize', ['$event'])
 
+  ngOnInit() {
+    this.setData(this.dataUrl1)
+  }
+
   onResize (event: any): void {
     this.debounce(() => this.render({ skipTransition: true }), 200)()
   }
@@ -64,6 +72,14 @@ export class ChartComponent implements AfterViewInit {
       clearTimeout(timeout)
       timeout = setTimeout(() => func.apply(this, args), wait)
     }
+  }
+
+  clickedOption1() {
+    this.setData(this.dataUrl1)
+  }
+
+  clickedOption2() {
+    this.setData(this.dataUrl2)
   }
 
   async ngAfterViewInit () {
@@ -83,19 +99,28 @@ export class ChartComponent implements AfterViewInit {
       .append('path')
       .attr('d', 'M0,-5L10,0L0,5')
 
-    const r = await fetch(this.dataUrl)
-    const raw = await r.json()
-    const xMax = _.findLast(raw, d => _.sumBy(this.config.y, y => d[y.key as string]) > 0).speed * 1
-    this.data = _.filter(_.sortBy(raw, this.config.xKey), d => (
-      _.sumBy(this.config.y, y => d[y.key]) > 0 || d[this.config.xKey] < xMax
-    ))
-
-    const xExtent = d3.extent(this.data, d => d[this.config.xKey])
-    const step = (xExtent[1] - xExtent[0]) / (this.data.length - 1)
-    this.config.step = step
-
-    this.render()
   }
+
+  async setData(option) {
+    console.log("option", option)
+    const r = await fetch(option)
+    const raw = await r.json()
+    console.log("raw", raw)
+    this.data = raw
+    const xMax = _.findLast(this.data, (d) => _.sumBy(this.config.y, (y) => d[y.key as string]) > 0).speed * 1;
+    this.data = _.filter(
+      _.sortBy(this.data, this.config.xKey),
+      (d) => _.sumBy(this.config.y, (y) => d[y.key]) > 0 || d[this.config.xKey] < xMax
+    );
+
+    const xExtent = d3.extent(this.data, (d) => d[this.config.xKey]);
+    const step = (xExtent[1] - xExtent[0]) / (this.data.length - 1);
+    this.config.step = step;
+
+    this.render();
+  }
+
+
 
   render (p?: any) {
     this.config.width = window.innerWidth / 1
