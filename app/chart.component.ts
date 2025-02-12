@@ -14,9 +14,6 @@ import Legend from './legend'
   templateUrl: './chart.component.html',
 })
 export class ChartComponent implements AfterViewInit, OnInit {
-
-  selectedOption: string = ''; // Default selected value
-
   dataUrl1 = './data/d2.json'
   dataUrl2 = './data/d3.json'
   svg: any
@@ -57,11 +54,11 @@ export class ChartComponent implements AfterViewInit, OnInit {
     this.setData(this.dataUrl1)
   }
 
-  onResize (event: any): void {
+  onResize (event: any) {
     this.debounce(() => this.render({ skipTransition: true }), 200)()
   }
 
-  onToggle (i: number): void {
+  onToggle (i: number) {
     this.config.y[i].enabled = !this.config.y[i].enabled
     this.render({ skipTransition: true })
   }
@@ -101,16 +98,20 @@ export class ChartComponent implements AfterViewInit, OnInit {
 
   }
 
-  async setData(option) {
-    console.log("option", option)
-    const r = await fetch(option)
-    const raw = await r.json()
-    console.log("raw", raw)
-    this.data = raw
-    const xMax = _.findLast(this.data, (d) => _.sumBy(this.config.y, (y) => d[y.key as string]) > 0).speed * 1;
+  async setData(url) {
+    const r = await fetch(url)
+    const source = await r.json()
+
+    _.each(source, d => {
+      _.each(d, (v, k) => d[k] = v || Chart.barMinHeight)
+    })
+
+    this.data = source
+    const minSum = 4 * Chart.barMinHeight
+    const xMax = _.findLast(this.data, (d) => _.sumBy(this.config.y, (y) => d[y.key as string]) > minSum)[this.config.xKey] * 1;
     this.data = _.filter(
       _.sortBy(this.data, this.config.xKey),
-      (d) => _.sumBy(this.config.y, (y) => d[y.key]) > 0 || d[this.config.xKey] < xMax
+      (d) => _.sumBy(this.config.y, (y) => d[y.key]) > minSum || d[this.config.xKey] < xMax
     );
 
     const xExtent = d3.extent(this.data, (d) => d[this.config.xKey]);
@@ -119,8 +120,6 @@ export class ChartComponent implements AfterViewInit, OnInit {
 
     this.render();
   }
-
-
 
   render (p?: any) {
     this.config.width = window.innerWidth / 1
@@ -153,6 +152,7 @@ export class ChartComponent implements AfterViewInit, OnInit {
       fontSize1: cell * 1.5,
       cornerRadius: 3,
       onToggle: this.onToggle.bind(this),
+      animation: 750,
     })
 
     this.svg.attr('width', this.config.width).attr('height', this.config.width / this.config.aspectRatio)

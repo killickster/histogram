@@ -19,7 +19,7 @@ export default function Chart (c, data) {
   const height = c.width / c.aspectRatio
   const barWidth = (c.width - c.margin.left - c.margin.right) / data.length
   const xScale = d3.scaleBand(
-    data.map(d => d.speed),
+    data.map(d => d[c.xKey]),
     [c.margin.left - (barWidth * c.padding) / 2, c.width - c.margin.right]
   ).padding(c.padding)
 
@@ -87,7 +87,7 @@ export default function Chart (c, data) {
       .style('opacity', (d, i) => yDefs[i].enabled ? 1 : 0.15)
 
     const bars = groups.selectAll('path')
-      .data(d => d)
+      .data(d => d, d => d.data.speed)
       .join('path')
       .on('mouseover', (e, d) => {
         _.each(document.querySelectorAll(`.xKey-${ d.data[c.xKey] }`), el => el.classList.add('shadow'))
@@ -100,16 +100,16 @@ export default function Chart (c, data) {
 
     bars
       .transition()
-      .duration(c.skipTransition ? 0 : 750)
+      .duration(c.skipTransition ? 0 : c.animation)
       .attr('class', d => `xKey-${ d.data[c.xKey] }`, true)
-      .attr('d', (d) => {
-        const isFlat = d[1] !== _.sumBy(stackedDefs, y => d.data[y.key])
+      .attr('d', d => {
+        const isFlat = d[1] < _.sumBy(stackedDefs, y => d.data[y.key] > Chart.barMinHeight ? d.data[y.key] : 0)
         return roundedRect(
           xScale(d.data[c.xKey]),
           yScale(d[1]),
           xScale.bandwidth(),
           yScale(d[0]) - yScale(d[1]),
-          [isFlat ? 0 : c.cornerRadius, isFlat ? 0 : c.cornerRadius, 0, 0,]
+          [isFlat ? 0.1 : c.cornerRadius, isFlat ? 0.1 : c.cornerRadius, 0, 0,]
         )
       })
   }
@@ -122,7 +122,10 @@ export default function Chart (c, data) {
       .classed('axis', true)
       .classed('x-axis', true)
       .attr('transform', `translate(0,${ height - c.margin.bottom })`)
+      .transition()
+      .duration(c.animation)
       .call(xAxis)
+      .selection()
 
     xAxisEl.selectAll('text.label').data([null]).join('text')
       .classed('label', true)
@@ -148,6 +151,7 @@ export default function Chart (c, data) {
       .classed('y-axis', true)
       .attr('transform', `translate(${ c.margin.left },0)`)
       .transition()
+      .duration(c.animation)
       .call(yAxis)
       .selection()
 
@@ -178,3 +182,6 @@ export default function Chart (c, data) {
   yAxis()
   c.skipTransition = false
 }
+
+// min value allows seamless transition for enter / exit nodes
+Chart.barMinHeight = 0.001
